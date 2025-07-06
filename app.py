@@ -110,7 +110,7 @@ if uploaded_files and len(uploaded_files) >= 6:
                     <h1 style='color:#14532d;font-size:56px;'>${total_predicted:.2f}</h1>
                 </div>
             """, unsafe_allow_html=True)
-        else:
-            st.warning("⚠️ Could not get weather forecast. Please try again later.")
+    else:
+        st.warning("⚠️ Could not get weather forecast. Please try again later.")
     else:
         st.warning("⚠️ Upload at least 6 valid PDF files to run prediction.")

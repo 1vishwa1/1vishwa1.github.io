@@ -104,10 +104,11 @@ if uploaded_files and len(uploaded_files) >= 6:
         forecast_df['month'] = forecast_df['date'].dt.month
         forecast_df['predicted_cost'] = model.predict(forecast_df[['temperature_2m_mean', 'month']])
         total_predicted = forecast_df['predicted_cost'].sum() * 2
-        st.markdown(f"""
-<h1 style='color:green; text-align:center;'>💰 Predicted Bill for Next Month</h1>
+     st.markdown(f"""
+<h1 style='color:green; text-align:center;'>💰 Predicted Bill for {next_month_name}</h1>
 <h2 style='font-size: 48px; text-align:center;'>${total_predicted:.2f}</h2>
 """, unsafe_allow_html=True)
+
 
     else:
         st.warning("⚠️ Could not get weather forecast. Please try again later.")

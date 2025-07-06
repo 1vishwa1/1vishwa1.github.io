@@ -15,7 +15,7 @@ st.markdown("""Upload at least **6 recent electricity bill PDFs**. This app:
 - Fetches daily weather data for those billing periods
 - Assumes colder days → more consumption
 - Predicts next 4 weeks' bill using temperature forecast
-- This tool works for Boston region only
+- This tool is accurate only for Boston region
 - Visit https://www.vbadiger.com for more such cool projects""")
 
 uploaded_files = st.file_uploader("Upload at least 6 electricity bill PDFs", type="pdf", accept_multiple_files=True)

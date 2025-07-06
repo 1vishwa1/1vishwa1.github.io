@@ -104,7 +104,7 @@ if uploaded_files and len(uploaded_files) >= 6:
         forecast_df['month'] = forecast_df['date'].dt.month
         forecast_df['predicted_cost'] = model.predict(forecast_df[['temperature_2m_mean', 'month']])
         total_predicted = forecast_df['predicted_cost'].sum() * 2
-        st.title("Predicted Bill for Next Month:")
+        st.title("Predicted Bill for Next Month: **${total_predicted:.2f}**")
         st.success(f"- **${total_predicted:.2f}**")
     else:
         st.warning("⚠️ Could not get weather forecast. Please try again later.")

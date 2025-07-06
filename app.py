@@ -8,15 +8,15 @@ from datetime import datetime, timedelta
 from sklearn.ensemble import RandomForestRegressor
 
 st.set_page_config(page_title="Electricity Bill Forecast", layout="centered")
-st.title("⚡ Predict Next Month's Electricity Bill Based on Past Bills + Weather")
+st.title("⚡ Predict Upcoming Electricity Bill Using Weather & Past Bills")
 
-st.markdown("""Upload at least **6 recent electricity bill PDFs**. The app will:
-- Extract billing periods and total usage
-- Fetch daily weather during each period
-- Correlate temperature to cost (colder = costlier)
-- Predict next month’s bill based on temperature forecast""")
+st.markdown("""Upload at least **6 recent electricity bill PDFs**. This app:
+- Extracts your energy usage and cost
+- Fetches daily weather data for those billing periods
+- Assumes colder days → more consumption
+- Predicts next 2 weeks' bill using temperature forecast""")
 
-uploaded_files = st.file_uploader("Upload Electricity Bill PDFs", type="pdf", accept_multiple_files=True)
+uploaded_files = st.file_uploader("Upload at least 6 electricity bill PDFs", type="pdf", accept_multiple_files=True)
 
 # --- Utilities ---
 def extract_bill_data(file):
@@ -49,11 +49,10 @@ def fetch_weather(start, end):
     res = requests.get(url, params=params)
     return pd.DataFrame(res.json()['daily'])
 
-def forecast_next_month_temperatures():
+def forecast_next_2_weeks():
     today = datetime.now().date()
-    next_month = today.replace(day=1) + timedelta(days=32)
-    start = next_month.replace(day=1)
-    end = (start + timedelta(days=32)).replace(day=1) - timedelta(days=1)
+    start = today + timedelta(days=1)
+    end = start + timedelta(days=13)  # forecast 14 days ahead
 
     url = "https://api.open-meteo.com/v1/forecast"
     params = {
@@ -67,7 +66,8 @@ def forecast_next_month_temperatures():
     res = requests.get(url, params=params)
     json_data = res.json()
     if "daily" not in json_data:
-        raise ValueError(f"Forecast API response invalid: {json_data}")
+        st.error("⚠️ Forecast API failed. Check your internet or API availability.")
+        return pd.DataFrame(columns=["date", "temperature_2m_mean"])
 
     df = pd.DataFrame(json_data["daily"])
     df["date"] = pd.to_datetime(df["time"])
@@ -97,12 +97,13 @@ if uploaded_files and len(uploaded_files) >= 6:
     model = RandomForestRegressor(n_estimators=100, random_state=42)
     model.fit(full_df[['temperature_2m_mean', 'month']], full_df['cost'])
 
-    forecast_df = forecast_next_month_temperatures()
-    forecast_df['month'] = forecast_df['date'].dt.month
-    forecast_df['predicted_cost'] = model.predict(forecast_df[['temperature_2m_mean', 'month']])
-
-    total_predicted = forecast_df['predicted_cost'].sum()
-
-    st.success(f"📅 Predicted Bill for Next Month: **${total_predicted:.2f}**")
+    forecast_df = forecast_next_2_weeks()
+    if not forecast_df.empty:
+        forecast_df['month'] = forecast_df['date'].dt.month
+        forecast_df['predicted_cost'] = model.predict(forecast_df[['temperature_2m_mean', 'month']])
+        total_predicted = forecast_df['predicted_cost'].sum()
+        st.success(f"📅 Estimated Bill for Next 2 Weeks: **${total_predicted:.2f}**")
+    else:
+        st.warning("⚠️ Could not get weather forecast. Please try again later.")
 else:
-    st.info("Please upload at least 6 readable PDF bills to generate a prediction.")
+    st.info("Upload at least 6 electricity bill PDFs to generate a prediction.")

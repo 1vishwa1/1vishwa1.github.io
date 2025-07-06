@@ -1,13 +1,12 @@
-# 📊 Electricity Bill Predictor
+# 📊 Electricity Bill Forecast with Weather
 
-This Streamlit app lets you upload multiple past electricity bill PDFs, fetches corresponding weather data, and predicts the next month's bill using a temperature-weighted model.
+This Streamlit app lets you upload 6+ electricity bill PDFs, fetches historical temperatures, and predicts your next 2-week bill using current weather forecasts.
 
 ## Features
-- Upload 6+ PDFs of past bills
-- Extracts usage and amount due
-- Uses historical weather data
-- Correlates cold days with higher energy cost
-- Predicts next month’s bill based on forecasted temperatures
+- Auto-extracts billing period, kWh, and cost from PDFs
+- Uses Open-Meteo for historical & forecasted temperature
+- Trains a model to relate temperature to cost
+- Predicts upcoming bill for 14 days ahead
 
 ## Run Locally
 

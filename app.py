@@ -111,6 +111,6 @@ if uploaded_files and len(uploaded_files) >= 6:
                 </div>
             """, unsafe_allow_html=True)
     else:
-        st.warning("⚠️ Could not get weather forecast. Please try again later.")
+        st.warning("⚠️ Could not get weather forecast. Please try again later.")    
     else:
         st.warning("⚠️ Upload at least 6 valid PDF files to run prediction.")

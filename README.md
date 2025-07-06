@@ -1,14 +1,16 @@
-# ⚡ Electricity Bill Predictor
+# 📊 Electricity Bill Predictor
 
-This Streamlit app simulates electricity bill extraction and prediction based on simplified PDF data.
+This Streamlit app lets you upload multiple past electricity bill PDFs, fetches corresponding weather data, and predicts the next month's bill using a temperature-weighted model.
 
 ## Features
-- Simulated PDF extraction logic
-- Interactive sliders for estimating next month's bill
-- Random Forest model prediction
-- Ready to deploy to Streamlit Cloud
+- Upload 6+ PDFs of past bills
+- Extracts usage and amount due
+- Uses historical weather data
+- Correlates cold days with higher energy cost
+- Predicts next month’s bill based on forecasted temperatures
 
-## To Run Locally
+## Run Locally
+
 ```bash
 pip install -r requirements.txt
 streamlit run app.py

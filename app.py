@@ -1,69 +1,104 @@
 import streamlit as st
 import pandas as pd
+import numpy as np
+import requests
 import re
+import pdfplumber
+from datetime import datetime, timedelta
 from sklearn.ensemble import RandomForestRegressor
 
-st.set_page_config(page_title="Energy Bill Predictor")
-st.title("⚡ Electricity Bill Estimator (Simulated)")
+st.set_page_config(page_title="Electricity Bill Forecast", layout="centered")
+st.title("⚡ Predict Next Month's Electricity Bill Based on Past Bills + Weather")
 
-st.write("This demo simulates data extraction and prediction based on simplified input without requiring PDF or external pip installs.")
+st.markdown("""Upload at least **6 recent electricity bill PDFs**. The app will:
+- Extract billing periods and total usage
+- Fetch daily weather during each period
+- Correlate temperature to cost (colder = costlier)
+- Predict next month’s bill based on temperature forecast""")
 
-# ---- Simulated Extracted Text ----
-simulated_text = """
-Service from 07/09/24 - 08/06/24
-736 kWh X
-Total Amount Due $243.81
-average daily electric use was 25.4 kWh
-"""
+uploaded_files = st.file_uploader("Upload Electricity Bill PDFs", type="pdf", accept_multiple_files=True)
 
-# ---- Field Extraction ----
-def extract_field(pattern, text):
-    match = re.search(pattern, text)
-    return match.group(1).strip() if match else None
+# --- Utilities ---
+def extract_bill_data(file):
+    with pdfplumber.open(file) as pdf:
+        text = ''.join(page.extract_text() for page in pdf.pages if page.extract_text())
 
-billing_start = extract_field(r'Service from (\d{2}/\d{2}/\d{2})', simulated_text)
-billing_end = extract_field(r'- (\d{2}/\d{2}/\d{2})', simulated_text)
-kwh_used = extract_field(r'(\d+)\s*kWh\s+X', simulated_text)
-amount_due = extract_field(r'Total Amount Due\s+\$?(\d+\.\d{2})', simulated_text)
-avg_daily_kwh = extract_field(r'average daily\s+electric use was\s+(\d+\.?\d*)\s*kWh', simulated_text)
+    try:
+        billing_period = re.search(r'Service from (\d{2}/\d{2}/\d{2}) - (\d{2}/\d{2}/\d{2})', text)
+        kwh_used = re.search(r'(\d+)\s*kWh\s+X', text)
+        amount_due = re.search(r'Total Amount Due\s+\$?(\d+\.\d{2})', text)
 
-extracted_data = {
-    "Billing Start": billing_start,
-    "Billing End": billing_end,
-    "kWh Used": kwh_used,
-    "Amount Due ($)": amount_due,
-    "Avg Daily kWh": avg_daily_kwh
-}
+        start = pd.to_datetime(billing_period.group(1), format="%m/%d/%y")
+        end = pd.to_datetime(billing_period.group(2), format="%m/%d/%y")
+        usage = int(kwh_used.group(1))
+        cost = float(amount_due.group(1))
+        return {'billing_start': start, 'billing_end': end, 'kwh_used': usage, 'total_amount_due': cost}
+    except:
+        return None
 
-st.subheader("Extracted Bill Data")
-st.json(extracted_data)
+def fetch_weather(start, end):
+    url = "https://archive-api.open-meteo.com/v1/archive"
+    params = {
+        "latitude": 42.3601,
+        "longitude": -71.0589,
+        "start_date": start.strftime("%Y-%m-%d"),
+        "end_date": end.strftime("%Y-%m-%d"),
+        "daily": "temperature_2m_mean",
+        "timezone": "America/New_York"
+    }
+    res = requests.get(url, params=params)
+    return pd.DataFrame(res.json()['daily'])
 
-# ---- Prediction Section ----
-st.subheader("Predict Next Month's Bill")
+def forecast_next_month_temperatures():
+    today = datetime.now().date()
+    next_month = today.replace(day=1) + timedelta(days=32)
+    start = next_month.replace(day=1)
+    end = (start + timedelta(days=32)).replace(day=1) - timedelta(days=1)
 
-month = st.slider("Month", 1, 12, 6)
-avg_temp = st.slider("Average Temperature (°C)", -10, 40, 15)
-billing_days = st.slider("Billing Days", 25, 35, 30)
-usage_kwh = st.slider("kWh Used", 100, 1500, 500)
+    url = "https://archive-api.open-meteo.com/v1/era5"
+    params = {
+        "latitude": 42.3601,
+        "longitude": -71.0589,
+        "start_date": start.strftime("%Y-%m-%d"),
+        "end_date": end.strftime("%Y-%m-%d"),
+        "daily": "temperature_2m_mean",
+        "timezone": "America/New_York"
+    }
+    res = requests.get(url, params=params)
+    df = pd.DataFrame(res.json()['daily'])
+    df['date'] = pd.to_datetime(df['time'])
+    return df[['date', 'temperature_2m_mean']]
 
-# ---- Placeholder Training Data ----
-df_train = pd.DataFrame({
-    'kwh_used': [400, 600, 800],
-    'billing_days': [30, 30, 30],
-    'avg_temp': [5, 15, 25],
-    'month': [1, 6, 8],
-    'amount_due': [120, 90, 70]
-})
+# --- Main Pipeline ---
+if uploaded_files and len(uploaded_files) >= 6:
+    all_daily_data = []
+    for file in uploaded_files:
+        bill = extract_bill_data(file)
+        if not bill:
+            st.warning(f"⚠️ Could not parse {file.name}")
+            continue
 
-model = RandomForestRegressor(n_estimators=50, random_state=0)
-model.fit(df_train[['kwh_used', 'billing_days', 'avg_temp', 'month']], df_train['amount_due'])
+        weather_df = fetch_weather(bill['billing_start'], bill['billing_end'])
+        weather_df['date'] = pd.to_datetime(weather_df['time'])
+        weather_df = weather_df[['date', 'temperature_2m_mean']]
+        weather_df['inv_temp'] = 1 / (weather_df['temperature_2m_mean'] + 0.01)
+        weather_df['weight'] = weather_df['inv_temp'] / weather_df['inv_temp'].sum()
+        weather_df['kwh_used'] = weather_df['weight'] * bill['kwh_used']
+        weather_df['cost'] = weather_df['weight'] * bill['total_amount_due']
+        all_daily_data.append(weather_df[['date', 'temperature_2m_mean', 'kwh_used', 'cost']])
 
-pred_input = pd.DataFrame.from_dict([{
-    'kwh_used': usage_kwh,
-    'billing_days': billing_days,
-    'avg_temp': avg_temp,
-    'month': month
-}])
+    full_df = pd.concat(all_daily_data).dropna()
+    full_df['month'] = full_df['date'].dt.month
 
-pred = model.predict(pred_input)[0]
-st.metric(label="Predicted Bill Amount", value=f"${pred:.2f}")
+    model = RandomForestRegressor(n_estimators=100, random_state=42)
+    model.fit(full_df[['temperature_2m_mean', 'month']], full_df['cost'])
+
+    forecast_df = forecast_next_month_temperatures()
+    forecast_df['month'] = forecast_df['date'].dt.month
+    forecast_df['predicted_cost'] = model.predict(forecast_df[['temperature_2m_mean', 'month']])
+
+    total_predicted = forecast_df['predicted_cost'].sum()
+
+    st.success(f"📅 Predicted Bill for Next Month: **${total_predicted:.2f}**")
+else:
+    st.info("Please upload at least 6 readable PDF bills to generate a prediction.")

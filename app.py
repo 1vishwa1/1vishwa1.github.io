@@ -101,16 +101,16 @@ if uploaded_files and len(uploaded_files) >= 6:
 
     forecast_df = forecast_next_2_weeks()
     if not forecast_df.empty:
-        forecast_df['month'] = forecast_df['date'].dt.month
-        forecast_df['predicted_cost'] = model.predict(forecast_df[['temperature_2m_mean', 'month']])
-        total_predicted = forecast_df['predicted_cost'].sum() * 2
-      st.markdown(f"""
-      <div style='background-color:#d1e7dd;padding:40px;border-radius:12px;text-align:center;border:3px solid #0f5132;'>
-      <h1 style='color:#0f5132;font-size:36px;'>📅 Predicted Bill for Next Month:</h1>
-      <h1 style='color:#14532d;font-size:56px;'>${total_predicted:.2f}</h1>
-      </div>
-      """, unsafe_allow_html=True)
+            forecast_df['month'] = forecast_df['date'].dt.month
+            forecast_df['predicted_cost'] = model.predict(forecast_df[['temperature_2m_mean', 'month']])
+            total_predicted = forecast_df['predicted_cost'].sum() * 2
+            st.markdown(f"""
+                <div style='background-color:#d1e7dd;padding:40px;border-radius:12px;text-align:center;border:3px solid #0f5132;'>
+                    <h1 style='color:#0f5132;font-size:36px;'>📅 Predicted Bill for Next Month:</h1>
+                    <h1 style='color:#14532d;font-size:56px;'>${total_predicted:.2f}</h1>
+                </div>
+            """, unsafe_allow_html=True)
+        else:
+            st.warning("⚠️ Could not get weather forecast. Please try again later.")
     else:
-        st.warning("⚠️ Could not get weather forecast. Please try again later.")
-else:
-    st.info("Upload at least 6 electricity bill PDFs to generate a prediction.")
+        st.warning("⚠️ Upload at least 6 valid PDF files to run prediction.")

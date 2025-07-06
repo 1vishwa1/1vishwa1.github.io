@@ -113,6 +113,6 @@ if uploaded_files and len(uploaded_files) >= 6:
             <h2 style='color:#212529;font-size:50px;'>${total_predicted:.2f}</h2>
         </div>
     """, unsafe_allow_html=True)
-else:
+    else:
     st.warning("⚠️ Could not get weather forecast. Please try again later.")
 

@@ -55,7 +55,7 @@ def forecast_next_month_temperatures():
     start = next_month.replace(day=1)
     end = (start + timedelta(days=32)).replace(day=1) - timedelta(days=1)
 
-    url = "https://archive-api.open-meteo.com/v1/era5"
+    url = "https://api.open-meteo.com/v1/forecast"
     params = {
         "latitude": 42.3601,
         "longitude": -71.0589,
@@ -65,9 +65,13 @@ def forecast_next_month_temperatures():
         "timezone": "America/New_York"
     }
     res = requests.get(url, params=params)
-    df = pd.DataFrame(res.json()['daily'])
-    df['date'] = pd.to_datetime(df['time'])
-    return df[['date', 'temperature_2m_mean']]
+    json_data = res.json()
+    if "daily" not in json_data:
+        raise ValueError(f"Forecast API response invalid: {json_data}")
+
+    df = pd.DataFrame(json_data["daily"])
+    df["date"] = pd.to_datetime(df["time"])
+    return df[["date", "temperature_2m_mean"]]
 
 # --- Main Pipeline ---
 if uploaded_files and len(uploaded_files) >= 6:

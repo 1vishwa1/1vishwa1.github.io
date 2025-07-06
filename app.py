@@ -104,7 +104,8 @@ if uploaded_files and len(uploaded_files) >= 6:
         forecast_df['month'] = forecast_df['date'].dt.month
         forecast_df['predicted_cost'] = model.predict(forecast_df[['temperature_2m_mean', 'month']])
         total_predicted = forecast_df['predicted_cost'].sum() * 2
-      st.markdown(f"""<div style='background-color:#d1e7dd;padding:40px;border-radius:12px;text-align:center;border:3px solid #0f5132;'>
+      st.markdown(f"""
+      <div style='background-color:#d1e7dd;padding:40px;border-radius:12px;text-align:center;border:3px solid #0f5132;'>
       <h1 style='color:#0f5132;font-size:36px;'>📅 Predicted Bill for Next Month:</h1>
       <h1 style='color:#14532d;font-size:56px;'>${total_predicted:.2f}</h1>
       </div>

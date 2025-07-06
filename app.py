@@ -8,9 +8,10 @@ from datetime import datetime, timedelta
 from sklearn.ensemble import RandomForestRegressor
 
 st.set_page_config(page_title="Electricity Bill Forecast", layout="centered")
-st.title("⚡ Predict Upcoming Electricity Bill Using Weather & Past Bills")
+st.title("⚡ Monthly Electricity Bill Predictor")
 
 st.markdown("""Upload at least **6 recent electricity bill PDFs**. This app:
+- Predict Upcoming Electricity Bill Using Weather & Past Bills
 - Extracts your energy usage and cost
 - Fetches daily weather data for those billing periods
 - Assumes colder days → more consumption

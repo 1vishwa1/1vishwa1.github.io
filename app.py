@@ -16,7 +16,7 @@ st.markdown("""Upload at least **6 recent electricity bill PDFs**. This app:
 - Fetches daily weather data for those billing periods
 - Assumes colder days → more consumption
 - Predicts next 4 weeks' bill using temperature forecast
-- This tool works for the Boston region
+- This tool works well for bills generated at 87 Sheridan St, Boston, MA :)
 - Uses ML model to predict (tools: Python, Scikit Learn)
 - Head to https://www.vbadiger.com for more such cool projects""")
 

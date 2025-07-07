@@ -17,6 +17,7 @@ st.markdown("""Upload at least **6 recent electricity bill PDFs**. This app:
 - Assumes colder days → more consumption
 - Predicts next 2 weeks' bill using temperature forecast
 - This tool works for the Boston region
+- Uses ML model to predict (tools: Python, Scikit Learn)
 - Head to https://www.vbadiger.com for more such cool projects""")
 
 uploaded_files = st.file_uploader("Upload at least 6 electricity bill PDFs", type="pdf", accept_multiple_files=True)
